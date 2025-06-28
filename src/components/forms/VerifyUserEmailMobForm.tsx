@@ -38,6 +38,7 @@ export default function VerifyUserEmailMobForm() {
       if (data.success) toast.success(data.message);
       else toast.error(data.message);
     } catch (err) {
+      console.error("Error sending OTP:", err);
       toast.error("Failed to send OTP.");
     } finally {
       setLoading((prev) => ({ ...prev, [type]: false }));
@@ -64,6 +65,7 @@ export default function VerifyUserEmailMobForm() {
         toast.error(data.message);
       }
     } catch (err) {
+      console.error("Error verifying OTP:", err);
       toast.error("Verification failed.");
     } finally {
       setVerifying((prev) => ({ ...prev, [type]: false }));

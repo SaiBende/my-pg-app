@@ -71,6 +71,7 @@ export default function BankDetailsForm() {
         toast.error(data.message || "Failed to save bank details.");
       }
     } catch (error) {
+      console.error("Error submitting bank details:", error);
       toast.error("Error submitting bank details.");
     } finally {
       setLoading(false);

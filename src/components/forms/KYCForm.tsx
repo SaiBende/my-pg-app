@@ -26,7 +26,7 @@ export default function KYCForm() {
           setKycData(data.data);
         }
       } catch (err) {
-        console.error("Failed to fetch KYC");
+        console.error("Failed to fetch KYC", err);
       }
     };
     fetchKYC();
@@ -48,6 +48,7 @@ export default function KYCForm() {
         toast.error(data.message);
       }
     } catch (err) {
+      console.error("Error submitting KYC:", err);
       toast.error("Something went wrong.");
     } finally {
       setLoading(false);

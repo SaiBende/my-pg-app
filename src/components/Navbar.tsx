@@ -143,10 +143,7 @@ const Navbar = ({
 }: NavbarProps) => {
 
   const {
-    data: session,
-    isPending, //loading state
-    error, //error object
-    refetch //refetch the session
+    data: session, //refetch the session
   } = authClient.useSession();
 
 

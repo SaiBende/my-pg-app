@@ -13,17 +13,11 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import Image from "next/image";
-import clsx from "clsx";
 
 type DocumentField = "idProof" | "addressProof" | "passportPhoto" | "selfieWithId";
 
-type FileMap = {
-  [key in DocumentField]: File | null;
-};
-
-type URLMap = {
-  [key in DocumentField]?: string;
-};
+type FileMap = Record<DocumentField, File | null>;
+type URLMap = Partial<Record<DocumentField, string>>;
 
 export default function DocumentForm() {
   const [files, setFiles] = useState<FileMap>({
@@ -34,7 +28,6 @@ export default function DocumentForm() {
   });
 
   const [previews, setPreviews] = useState<URLMap>({});
-  const [existingURLs, setExistingURLs] = useState<URLMap>({});
   const [loading, setLoading] = useState(false);
   const [modifiedFields, setModifiedFields] = useState<Set<DocumentField>>(new Set());
 
@@ -44,7 +37,6 @@ export default function DocumentForm() {
         const res = await fetch("/api/profile/documents");
         const data = await res.json();
         if (data.success) {
-          setExistingURLs(data.data);
           setPreviews(data.data);
         }
       } catch (error) {
@@ -57,10 +49,14 @@ export default function DocumentForm() {
 
   const handleFileChange = (field: DocumentField, file: File | null) => {
     setFiles((prev) => ({ ...prev, [field]: file }));
+
     setModifiedFields((prev) => {
       const newSet = new Set(prev);
-      if (file) newSet.add(field);
-      else newSet.delete(field);
+      if (file) {
+        newSet.add(field);
+      } else {
+        newSet.delete(field);
+      }
       return newSet;
     });
 
@@ -95,7 +91,6 @@ export default function DocumentForm() {
       const data = await res.json();
       if (data.success) {
         toast.success("Updated successfully");
-        setExistingURLs(data.data);
         setPreviews(data.data);
         setModifiedFields(new Set());
         setFiles({
@@ -108,6 +103,7 @@ export default function DocumentForm() {
         toast.error(data.message || "Update failed");
       }
     } catch (error) {
+      console.log("Error uploading files:", error);
       toast.error("Upload error");
     } finally {
       setLoading(false);
@@ -116,7 +112,6 @@ export default function DocumentForm() {
 
   const renderField = (label: string, field: DocumentField) => {
     const url = previews[field];
-    const file = files[field];
     const isModified = modifiedFields.has(field);
 
     return (
@@ -125,7 +120,12 @@ export default function DocumentForm() {
         {url ? (
           <div className="w-28 h-28 relative border rounded-md overflow-hidden">
             {url.endsWith(".pdf") ? (
-              <a href={url} target="_blank" className="text-sm underline text-blue-600">
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm underline text-blue-600 flex items-center justify-center h-full"
+              >
                 View PDF
               </a>
             ) : (

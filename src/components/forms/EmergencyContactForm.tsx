@@ -64,6 +64,7 @@ export default function EmergencyContactForm() {
         toast.error(data.message || "Failed to save contact.");
       }
     } catch (error) {
+      console.error("❌ Error submitting contact:", error);
       toast.error("Error submitting contact.");
     } finally {
       setLoading(false);

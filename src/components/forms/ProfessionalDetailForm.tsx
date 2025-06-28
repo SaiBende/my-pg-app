@@ -70,7 +70,7 @@ export default function ProfessionalDetailsForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, section?: "college" | "work") => {
     const { name, value } = e.target;
     if (section) {
-      setDetails((prev: any) => ({
+      setDetails((prev: ProfessionalDetails) => ({
         ...prev,
         [section]: {
           ...prev[section],
@@ -78,7 +78,7 @@ export default function ProfessionalDetailsForm() {
         },
       }));
     } else {
-      setDetails((prev: any) => ({ ...prev, [name]: value }));
+      setDetails((prev: ProfessionalDetails) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -97,6 +97,7 @@ export default function ProfessionalDetailsForm() {
         toast.error(data.message || "Failed to save.");
       }
     } catch (err) {
+      console.error("Error submitting:", err);
       toast.error("Submission failed.");
     } finally {
       setLoading(false);
@@ -116,7 +117,7 @@ export default function ProfessionalDetailsForm() {
           <Select
             value={details.professionalStatus}
             onValueChange={(val) =>
-              setDetails({ ...details, professionalStatus: val })
+              setDetails({ ...details, professionalStatus: val as "College Student" | "Working Professional" })
             }
             required
           >
