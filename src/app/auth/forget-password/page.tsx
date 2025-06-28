@@ -31,7 +31,7 @@ export default function Component() {
 		try {
 			await authClient.requestPasswordReset({
 				email,
-				redirectTo: "/auth/reset-password",
+				redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
 			});
 			setIsSubmitted(true);
 		} catch (err) {
