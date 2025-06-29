@@ -38,7 +38,7 @@ export function NavUser() {
   const { data: session } = authClient.useSession()
   const router = useRouter()
 
- 
+
 
   // ⛔ Return nothing if session isn't loaded yet
   if (!session) return null
@@ -115,8 +115,14 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={async () => {
-                await authClient.signOut()
-                router.push("/")
+                await authClient.signOut({
+                  fetchOptions: {
+                    onSuccess: () => {
+                      router.push("/auth/sign-in"); // redirect to login page
+                    }
+                  }
+                });
+
               }}
             >
               <IconLogout />

@@ -71,7 +71,7 @@ function ProfileForm() {
           if (profileData.dateOfBirth) {
             profileData.dateOfBirth = new Date(profileData.dateOfBirth)
               .toISOString()
-              .split("T")[0];
+              .split("T")[0]; 
           }
           setProfile(profileData);
         }

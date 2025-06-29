@@ -153,7 +153,13 @@ const Navbar = ({
         method: "POST",
         credentials: "include", // IMPORTANT to include cookies
       });
-
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push("/auth/sign-in"); 
+          }
+        }
+      });
       if (res.ok) {
         router.push("/auth/sign-in");
       } else {
