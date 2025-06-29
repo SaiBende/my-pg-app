@@ -148,28 +148,17 @@ const Navbar = ({
   } = authClient.useSession();
 
   const handleSignOut = async () => {
-    try {
-      const res = await fetch("/api/auth/sign-out", {
-        method: "POST",
-        credentials: "include", // IMPORTANT to include cookies
-      });
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push("/auth/sign-in"); 
-          }
-        }
-      });
-      if (res.ok) {
-        router.push("/auth/sign-in");
-      } else {
-        const errorText = await res.text();
-        console.error("Failed to sign out:", errorText);
-      }
-    } catch (err) {
-      console.error("Error signing out:", err);
-    }
-  };
+  try {
+    await authClient.signOut({
+      fetchOptions: {
+        credentials: "include", // ensures cookies are included
+      },
+    });
+    router.push("/auth/sign-in"); // redirect after successful logout
+  } catch (err) {
+    console.error("Error signing out:", err);
+  }
+};
 
 
   const router = useRouter();
