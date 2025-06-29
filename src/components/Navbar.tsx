@@ -24,6 +24,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { authClient } from "@/lib/auth-client"; // Adjust the import path as necessary
+import { useRouter } from "next/navigation";
 
 
 interface MenuItem {
@@ -144,9 +145,28 @@ const Navbar = ({
 
   const {
     data: session, //refetch the session
-
   } = authClient.useSession();
 
+  const handleSignOut = async () => {
+    try {
+      const res = await fetch("/api/auth/sign-out", {
+        method: "POST",
+        credentials: "include", // IMPORTANT to include cookies
+      });
+
+      if (res.ok) {
+        router.push("/auth/sign-in");
+      } else {
+        const errorText = await res.text();
+        console.error("Failed to sign out:", errorText);
+      }
+    } catch (err) {
+      console.error("Error signing out:", err);
+    }
+  };
+
+
+  const router = useRouter();
 
   return (
     <section className="py-2 px-2">
@@ -177,12 +197,10 @@ const Navbar = ({
                 <a href="/dashboard">{session.user?.name || "Profile"}</a>
               </Button>
               <Button
-                
+
                 variant="destructive"
                 size="sm"
-                onClick={async () =>{ await authClient.signOut();
-                  
-                }}
+                onClick={handleSignOut}
               >
                 Logout
               </Button>
@@ -240,10 +258,9 @@ const Navbar = ({
                         <a href="/dashboard">{session.user?.name || "Profile"}</a>
                       </Button>
                       <Button
-                        
                         variant="destructive"
                         size="sm"
-                        onClick={async () => await authClient.signOut()}
+                        onClick={handleSignOut}
                       >
                         Logout
                       </Button>
