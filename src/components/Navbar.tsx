@@ -144,6 +144,7 @@ const Navbar = ({
 
   const {
     data: session, //refetch the session
+
   } = authClient.useSession();
 
 
@@ -179,7 +180,9 @@ const Navbar = ({
                 
                 variant="destructive"
                 size="sm"
-                onClick={async () => await authClient.signOut()}
+                onClick={async () =>{ await authClient.signOut();
+                  
+                }}
               >
                 Logout
               </Button>
