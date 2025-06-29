@@ -21,6 +21,6 @@ const userSchema = new mongoose.Schema<UserInterface>({
    collection: "user", 
 });
 
-export const User = models?.User || model<UserInterface>("User", userSchema);
+const User = models?.User || model<UserInterface>("User", userSchema);
 
-
+export default User;
