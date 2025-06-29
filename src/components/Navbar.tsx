@@ -176,12 +176,12 @@ const Navbar = ({
                 <a href="/dashboard">{session.user?.name || "Profile"}</a>
               </Button>
               <Button
-                asChild
+                
                 variant="destructive"
                 size="sm"
-                onClick={() => authClient.signOut()}
-              > 
-              <span> Logout</span>
+                onClick={async () => await authClient.signOut()}
+              >
+                Logout
               </Button>
 
             </div>
@@ -237,12 +237,12 @@ const Navbar = ({
                         <a href="/dashboard">{session.user?.name || "Profile"}</a>
                       </Button>
                       <Button
-                        asChild
+                        
                         variant="destructive"
                         size="sm"
-                        onClick={() => authClient.signOut()}
+                        onClick={async () => await authClient.signOut()}
                       >
-                        <a href="#">Logout</a>
+                        Logout
                       </Button>
 
 
