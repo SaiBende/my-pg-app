@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useRouter } from 'next/navigation'
 
 const steps = [
   { title: "Profile", component: <ProfileForm /> },
@@ -34,9 +35,10 @@ function ProfileFormPage() {
   };
 
   const progress = ((step + 1) / steps.length) * 100;
+  const router=useRouter();
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
+    <div className="max-w-2xl mx-auto p-4 space-y-4 justify-center">
       <Progress value={progress} />
       <Card>
         <CardHeader>
@@ -50,7 +52,12 @@ function ProfileFormPage() {
           {step < steps.length - 1 ? (
             <Button onClick={goNext}>Next</Button>
           ) : (
-            <Button onClick={() => alert("All steps completed ✅")}>Finish</Button>
+            <>
+              <Button onClick={() => alert("All steps completed ✅")}>Finish</Button>
+              <Button onClick={() => {router.push("/dashboard")}} variant="outline">
+                Go To Dashboard
+              </Button>
+            </>
           )}
         </CardFooter>
       </Card>

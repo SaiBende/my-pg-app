@@ -180,8 +180,8 @@ const Navbar = ({
                 variant="destructive"
                 size="sm"
                 onClick={() => authClient.signOut()}
-              >
-                <a href="#">Logout</a>
+              > 
+              <span> Logout</span>
               </Button>
 
             </div>

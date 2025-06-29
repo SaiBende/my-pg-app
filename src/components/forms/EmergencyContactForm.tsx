@@ -23,6 +23,7 @@ export default function EmergencyContactForm() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     const fetchContact = async () => {
@@ -34,6 +35,8 @@ export default function EmergencyContactForm() {
         }
       } catch (error) {
         console.error("❌ Error loading contact", error);
+      } finally {
+        setFetching(false);
       }
     };
 
@@ -71,22 +74,40 @@ export default function EmergencyContactForm() {
     }
   };
 
+  // ✅ Responsive loading UI
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] px-4 py-8 sm:min-h-[60vh]">
+        <div className="flex flex-col items-center gap-2 text-center text-muted-foreground">
+          <div className="h-5 w-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+          <span className="text-sm">Loading contact details...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Card className="max-w-2xl mx-auto mt-8">
+    <Card className="max-w-2xl mx-auto mt-8 p-4 sm:p-6">
       <CardHeader>
         <CardTitle>Emergency Contact</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label className="mb-1 block">Contact Name<span className="text-red-500">*</span></Label>
+          <Label className="mb-1 block">
+            Contact Name<span className="text-red-500">*</span>
+          </Label>
           <Input name="contactName" value={contact.contactName} onChange={handleChange} required />
         </div>
         <div>
-          <Label className="mb-1 block">Relationship<span className="text-red-500">*</span></Label>
+          <Label className="mb-1 block">
+            Relationship<span className="text-red-500">*</span>
+          </Label>
           <Input name="relationship" value={contact.relationship} onChange={handleChange} required />
         </div>
         <div>
-          <Label className="mb-1 block">Mobile Number<span className="text-red-500">*</span></Label>
+          <Label className="mb-1 block">
+            Mobile Number<span className="text-red-500">*</span>
+          </Label>
           <Input name="mobileNumber" value={contact.mobileNumber} onChange={handleChange} required />
         </div>
         <div>

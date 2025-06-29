@@ -6,7 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface BankDetails {
   accountHolderName: string;
@@ -28,6 +34,7 @@ export default function BankDetailsForm() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     const fetchBankDetails = async () => {
@@ -39,6 +46,8 @@ export default function BankDetailsForm() {
         }
       } catch (error) {
         console.error("❌ Error loading bank details", error);
+      } finally {
+        setFetching(false);
       }
     };
 
@@ -78,12 +87,24 @@ export default function BankDetailsForm() {
     }
   };
 
+  // ✅ Responsive loading UI
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] px-4 py-8 sm:min-h-[60vh]">
+        <div className="flex flex-col items-center gap-2 text-center text-muted-foreground">
+          <div className="h-5 w-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+          <span className="text-sm">Loading bank details...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Card className="max-w-2xl mx-auto mt-8">
+    <Card className="max-w-2xl mx-auto mt-8 p-4 sm:p-6">
       <CardHeader>
         <CardTitle>Bank Details</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Label>Account Holder Name<span className="text-red-500">*</span></Label>
           <Input name="accountHolderName" value={bankDetails.accountHolderName} onChange={handleChange} />
@@ -106,20 +127,20 @@ export default function BankDetailsForm() {
         </div>
         <div>
           <Label>Account Type<span className="text-red-500">*</span></Label>
-          <RadioGroup
-            defaultValue={bankDetails.accountType}
-            onValueChange={(val) => setBankDetails((prev) => ({ ...prev, accountType: val as "Savings" | "Current" }))}
-            className="flex gap-6 mt-2"
+          <Select
+            value={bankDetails.accountType}
+            onValueChange={(val) =>
+              setBankDetails((prev) => ({ ...prev, accountType: val as "Savings" | "Current" }))
+            }
           >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Savings" id="savings" checked={bankDetails.accountType === "Savings"} />
-              <Label htmlFor="savings">Savings</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Current" id="current" checked={bankDetails.accountType === "Current"} />
-              <Label htmlFor="current">Current</Label>
-            </div>
-          </RadioGroup>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Account Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Savings">Savings</SelectItem>
+              <SelectItem value="Current">Current</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
       <CardFooter className="justify-end">

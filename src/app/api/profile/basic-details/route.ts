@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/connectDB";
 import { ProfileModel } from "@/models/ProfileModel";
+import { User } from "@/models/UserModel";
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,15 +14,23 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
-    const profile = await ProfileModel.findOne({ userId: session.user.id });
+    const [user, profile] = await Promise.all([
+      User.findById(session.user.id).select("name email image emailVerified"),
+      ProfileModel.findOne({ userId: session.user.id }),
+    ]);
 
-    if (!profile) {
-      return NextResponse.json({ message: "Profile not found", success: false }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ message: "User not found", success: false }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Profile fetched", success: true, data: profile }, { status: 200 });
+    const merged = {
+      ...user.toObject(),
+      ...(profile?.toObject() || {}),
+    };
+
+    return NextResponse.json({ message: "Profile and user data fetched", success: true, data: merged }, { status: 200 });
   } catch (error) {
-    console.error("❌ Error in GET /api/profile/basic:", error);
+    console.error("❌ Error fetching user/profile:", error);
     return NextResponse.json({ message: "Internal Server Error", success: false }, { status: 500 });
   }
 }

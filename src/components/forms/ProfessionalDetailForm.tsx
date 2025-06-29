@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 
-
 type CollegeDetails = {
   name?: string;
   course?: string;
@@ -49,7 +48,9 @@ export default function ProfessionalDetailsForm() {
     college: {},
     work: {},
   });
+
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   const fetchDetails = async () => {
     try {
@@ -59,7 +60,9 @@ export default function ProfessionalDetailsForm() {
         setDetails(data.data);
       }
     } catch (err) {
-      console.error("Error fetching:", err);
+      console.error("❌ Error fetching:", err);
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -67,10 +70,13 @@ export default function ProfessionalDetailsForm() {
     fetchDetails();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, section?: "college" | "work") => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    section?: "college" | "work"
+  ) => {
     const { name, value } = e.target;
     if (section) {
-      setDetails((prev: ProfessionalDetails) => ({
+      setDetails((prev) => ({
         ...prev,
         [section]: {
           ...prev[section],
@@ -78,7 +84,10 @@ export default function ProfessionalDetailsForm() {
         },
       }));
     } else {
-      setDetails((prev: ProfessionalDetails) => ({ ...prev, [name]: value }));
+      setDetails((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
@@ -90,6 +99,7 @@ export default function ProfessionalDetailsForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(details),
       });
+
       const data = await res.json();
       if (data.success) {
         toast.success("Professional details saved!");
@@ -97,29 +107,43 @@ export default function ProfessionalDetailsForm() {
         toast.error(data.message || "Failed to save.");
       }
     } catch (err) {
-      console.error("Error submitting:", err);
+      console.error("❌ Submission error:", err);
       toast.error("Submission failed.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] px-4 py-8 sm:min-h-[60vh]">
+        <div className="flex flex-col items-center gap-2 text-center text-muted-foreground">
+          <div className="h-5 w-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+          <span className="text-sm">Loading professional details...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Card className="max-w-2xl mx-auto mt-8">
+    <Card className="max-w-3xl mx-auto mt-8 p-4 sm:p-6">
       <CardHeader>
         <CardTitle>Professional Details</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="col-span-full">
           <Label className="mb-1 block">
             Professional Status <span className="text-red-500">*</span>
           </Label>
           <Select
             value={details.professionalStatus}
             onValueChange={(val) =>
-              setDetails({ ...details, professionalStatus: val as "College Student" | "Working Professional" })
+              setDetails({
+                ...details,
+                professionalStatus:
+                  val as "College Student" | "Working Professional",
+              })
             }
-            required
           >
             <SelectTrigger>
               <SelectValue placeholder="Select your status" />
@@ -133,60 +157,25 @@ export default function ProfessionalDetailsForm() {
 
         {details.professionalStatus === "College Student" && (
           <>
-            <div>
-              <Label className="mb-1 block">
-                College Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="name"
-                required
-                value={details.college?.name || ""}
-                onChange={(e) => handleChange(e, "college")}
-              />
+            <div className="col-span-full">
+              <Label className="mb-1 block">College Name <span className="text-red-500">*</span></Label>
+              <Input name="name" value={details.college?.name || ""} onChange={(e) => handleChange(e, "college")} />
             </div>
             <div>
-              <Label className="mb-1 block">
-                Course <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="course"
-                required
-                value={details.college?.course || ""}
-                onChange={(e) => handleChange(e, "college")}
-              />
+              <Label className="mb-1 block">Course <span className="text-red-500">*</span></Label>
+              <Input name="course" value={details.college?.course || ""} onChange={(e) => handleChange(e, "college")} />
             </div>
             <div>
-              <Label className="mb-1 block">
-                Year of Study <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="yearOfStudy"
-                required
-                value={details.college?.yearOfStudy || ""}
-                onChange={(e) => handleChange(e, "college")}
-              />
+              <Label className="mb-1 block">Year of Study <span className="text-red-500">*</span></Label>
+              <Input name="yearOfStudy" value={details.college?.yearOfStudy || ""} onChange={(e) => handleChange(e, "college")} />
             </div>
             <div>
-              <Label className="mb-1 block">
-                Roll Number <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="rollNumber"
-                required
-                value={details.college?.rollNumber || ""}
-                onChange={(e) => handleChange(e, "college")}
-              />
+              <Label className="mb-1 block">Roll Number <span className="text-red-500">*</span></Label>
+              <Input name="rollNumber" value={details.college?.rollNumber || ""} onChange={(e) => handleChange(e, "college")} />
             </div>
-            <div>
-              <Label className="mb-1 block">
-                College Address <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="address"
-                required
-                value={details.college?.address || ""}
-                onChange={(e) => handleChange(e, "college")}
-              />
+            <div className="col-span-full">
+              <Label className="mb-1 block">College Address <span className="text-red-500">*</span></Label>
+              <Input name="address" value={details.college?.address || ""} onChange={(e) => handleChange(e, "college")} />
             </div>
           </>
         )}
@@ -194,60 +183,24 @@ export default function ProfessionalDetailsForm() {
         {details.professionalStatus === "Working Professional" && (
           <>
             <div>
-              <Label className="mb-1 block">
-                Company Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="companyName"
-                required
-                value={details.work?.companyName || ""}
-                onChange={(e) => handleChange(e, "work")}
-              />
+              <Label className="mb-1 block">Company Name <span className="text-red-500">*</span></Label>
+              <Input name="companyName" value={details.work?.companyName || ""} onChange={(e) => handleChange(e, "work")} />
             </div>
             <div>
-              <Label className="mb-1 block">
-                Designation <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="designation"
-                required
-                value={details.work?.designation || ""}
-                onChange={(e) => handleChange(e, "work")}
-              />
+              <Label className="mb-1 block">Designation <span className="text-red-500">*</span></Label>
+              <Input name="designation" value={details.work?.designation || ""} onChange={(e) => handleChange(e, "work")} />
             </div>
             <div>
-              <Label className="mb-1 block">
-                Employee ID <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="employeeId"
-                required
-                value={details.work?.employeeId || ""}
-                onChange={(e) => handleChange(e, "work")}
-              />
+              <Label className="mb-1 block">Employee ID <span className="text-red-500">*</span></Label>
+              <Input name="employeeId" value={details.work?.employeeId || ""} onChange={(e) => handleChange(e, "work")} />
             </div>
             <div>
-              <Label className="mb-1 block">
-                Years of Experience <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                type="number"
-                name="experienceYears"
-                required
-                value={details.work?.experienceYears || ""}
-                onChange={(e) => handleChange(e, "work")}
-              />
+              <Label className="mb-1 block">Years of Experience <span className="text-red-500">*</span></Label>
+              <Input type="number" name="experienceYears" value={details.work?.experienceYears || ""} onChange={(e) => handleChange(e, "work")} />
             </div>
-            <div>
-              <Label className="mb-1 block">
-                Office Address <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                name="officeAddress"
-                required
-                value={details.work?.officeAddress || ""}
-                onChange={(e) => handleChange(e, "work")}
-              />
+            <div className="col-span-full">
+              <Label className="mb-1 block">Office Address <span className="text-red-500">*</span></Label>
+              <Input name="officeAddress" value={details.work?.officeAddress || ""} onChange={(e) => handleChange(e, "work")} />
             </div>
           </>
         )}

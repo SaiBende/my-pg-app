@@ -14,9 +14,9 @@ type KYCData = {
 
 export default function KYCForm() {
   const [kycData, setKycData] = useState<KYCData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // submit button
+  const [fetching, setFetching] = useState(true); // initial fetch
 
-  // Fetch KYC status on mount
   useEffect(() => {
     const fetchKYC = async () => {
       try {
@@ -24,9 +24,14 @@ export default function KYCForm() {
         const data = await res.json();
         if (data.success) {
           setKycData(data.data);
+        } else {
+          toast.error("Failed to fetch KYC data");
         }
       } catch (err) {
         console.error("Failed to fetch KYC", err);
+        toast.error("Error loading KYC info.");
+      } finally {
+        setFetching(false);
       }
     };
     fetchKYC();
@@ -55,37 +60,46 @@ export default function KYCForm() {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <div className="w-5 h-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+          <span className="text-sm">Checking KYC status...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Card className="max-w-md mx-auto">
+    <Card className="max-w-md mx-auto mt-8 p-4 sm:p-6">
       <CardHeader>
         <CardTitle>KYC Verification</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="grid gap-4">
         {kycData ? (
           <>
-            <p>
+            <div>
               <strong>Reference Number:</strong> {kycData.referenceNumber}
-            </p>
-            <p>
+            </div>
+            <div>
               <strong>Status:</strong>{" "}
               {kycData.isVerifiedByAdmin ? (
                 <span className="text-green-600">✅ Verified</span>
               ) : (
                 <span className="text-yellow-500">⏳ Pending</span>
               )}
-            </p>
+            </div>
             {kycData.verifiedAt && (
-              <p>
+              <div>
                 <strong>Verified At:</strong>{" "}
                 {new Date(kycData.verifiedAt).toLocaleString()}
-              </p>
+              </div>
             )}
           </>
         ) : (
           <>
-            <p>
-              You have not submitted KYC yet. Click the button below to initiate.
-            </p>
+            <p>You have not submitted KYC yet. Click the button below to initiate.</p>
             <Button onClick={handleSubmit} disabled={loading}>
               {loading ? "Submitting..." : "Submit KYC"}
             </Button>

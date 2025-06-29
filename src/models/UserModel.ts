@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { model, models } from 'mongoose';
 
-export interface User{
+ interface UserInterface{
   name: string;
   email: string;
   emailVerified: boolean;
@@ -11,7 +11,7 @@ export interface User{
   updatedAt?: Date;
 }
 
-const userSchema = new mongoose.Schema<User>({
+const userSchema = new mongoose.Schema<UserInterface>({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     emailVerified: { type: Boolean, default: false },
@@ -21,6 +21,6 @@ const userSchema = new mongoose.Schema<User>({
    collection: "user", 
 });
 
-const User = models?.User || model<User>("User", userSchema);
+export const User = models?.User || model<UserInterface>("User", userSchema);
 
-export default User;
+

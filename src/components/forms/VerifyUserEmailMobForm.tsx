@@ -17,12 +17,28 @@ export default function VerifyUserEmailMobForm() {
   const [otp, setOtp] = useState({ email: "", mobile: "" });
   const [loading, setLoading] = useState({ email: false, mobile: false });
   const [verifying, setVerifying] = useState({ email: false, mobile: false });
+  const [fetching, setFetching] = useState(true);
 
   // Fetch current verification status
   useEffect(() => {
-    fetch("/api/verify/status")
-      .then((res) => res.json())
-      .then((data) => setStatus(data.data || {}));
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch("/api/verify/status");
+        const data = await res.json();
+        if (data.success) {
+          setStatus(data.data || {});
+        } else {
+          toast.error("Failed to fetch verification status");
+        }
+      } catch (err) {
+        console.error("Error fetching status:", err);
+        toast.error("Error loading verification status.");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchStatus();
   }, []);
 
   const sendOtp = async (type: "email" | "mobile") => {
@@ -72,49 +88,62 @@ export default function VerifyUserEmailMobForm() {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <div className="w-5 h-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+          <span className="text-sm">Checking verification status...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Card className="max-w-md mx-auto">
+    <Card className="max-w-md mx-auto mt-8 p-4 sm:p-6">
       <CardHeader>
         <CardTitle>Verify Email & Mobile</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {["email", "mobile"].map((type) => (
-          <div key={type} className="space-y-2">
-            <Label className="capitalize">{type} verification</Label>
+      <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {(["email", "mobile"] as const).map((type) => {
+          const isVerified = status[type]?.verified;
 
-            {status[type as keyof VerificationStatus]?.verified ? (
-              <p className="text-green-600">✔️ Verified</p>
-            ) : (
-              <>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={`Enter ${type} OTP`}
-                    value={otp[type as "email" | "mobile"]}
-                    onChange={(e) =>
-                      setOtp((prev) => ({ ...prev, [type]: e.target.value }))
-                    }
-                  />
+          return (
+            <div key={type} className="space-y-2">
+              <Label className="capitalize">{type} verification</Label>
+
+              {isVerified ? (
+                <p className="text-green-600 font-medium">✅ Verified</p>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={`Enter ${type} OTP`}
+                      value={otp[type]}
+                      onChange={(e) =>
+                        setOtp((prev) => ({ ...prev, [type]: e.target.value }))
+                      }
+                    />
+                    <Button
+                      onClick={() => sendOtp(type)}
+                      disabled={loading[type]}
+                      variant="outline"
+                    >
+                      {loading[type] ? "Sending..." : "Send OTP"}
+                    </Button>
+                  </div>
                   <Button
-                    onClick={() => sendOtp(type as "email" | "mobile")}
-                    disabled={loading[type as "email" | "mobile"]}
-                    variant="outline"
+                    className="w-full"
+                    onClick={() => verifyOtp(type)}
+                    disabled={verifying[type]}
                   >
-                    {loading[type as "email" | "mobile"] ? "Sending..." : "Send OTP"}
+                    {verifying[type] ? "Verifying..." : "Verify"}
                   </Button>
-                </div>
-                <Button
-                  className="w-full"
-                  onClick={() => verifyOtp(type as "email" | "mobile")}
-                  disabled={verifying[type as "email" | "mobile"]}
-                >
-                  {verifying[type as "email" | "mobile"]
-                    ? "Verifying..."
-                    : "Verify"}
-                </Button>
-              </>
-            )}
-          </div>
-        ))}
+                </>
+              )}
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );

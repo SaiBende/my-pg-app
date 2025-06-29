@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import Image from "next/image";
 
 type DocumentField = "idProof" | "addressProof" | "passportPhoto" | "selfieWithId";
-
 type FileMap = Record<DocumentField, File | null>;
 type URLMap = Partial<Record<DocumentField, string>>;
 
@@ -29,6 +28,7 @@ export default function DocumentForm() {
 
   const [previews, setPreviews] = useState<URLMap>({});
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [modifiedFields, setModifiedFields] = useState<Set<DocumentField>>(new Set());
 
   useEffect(() => {
@@ -40,7 +40,9 @@ export default function DocumentForm() {
           setPreviews(data.data);
         }
       } catch (error) {
-        console.error("Error fetching:", error);
+        console.error("❌ Error fetching documents:", error);
+      } finally {
+        setFetching(false);
       }
     };
 
@@ -52,11 +54,8 @@ export default function DocumentForm() {
 
     setModifiedFields((prev) => {
       const newSet = new Set(prev);
-      if (file) {
-        newSet.add(field);
-      } else {
-        newSet.delete(field);
-      }
+      if (file) newSet.add(field);
+      else newSet.delete(field);
       return newSet;
     });
 
@@ -90,8 +89,8 @@ export default function DocumentForm() {
 
       const data = await res.json();
       if (data.success) {
-        toast.success("Updated successfully");
-        setPreviews(data.data);
+        toast.success("Documents uploaded successfully!");
+        setPreviews(data.data); // updated URLs
         setModifiedFields(new Set());
         setFiles({
           idProof: null,
@@ -100,11 +99,11 @@ export default function DocumentForm() {
           selfieWithId: null,
         });
       } else {
-        toast.error(data.message || "Update failed");
+        toast.error(data.message || "Upload failed");
       }
     } catch (error) {
-      console.log("Error uploading files:", error);
-      toast.error("Upload error");
+      console.error("❌ Upload error:", error);
+      toast.error("Error uploading documents");
     } finally {
       setLoading(false);
     }
@@ -115,47 +114,68 @@ export default function DocumentForm() {
     const isModified = modifiedFields.has(field);
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-2">
         <Label className="font-semibold">{label}</Label>
-        {url ? (
-          <div className="w-28 h-28 relative border rounded-md overflow-hidden">
-            {url.endsWith(".pdf") ? (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm underline text-blue-600 flex items-center justify-center h-full"
-              >
-                View PDF
-              </a>
-            ) : (
-              <Image
-                src={url}
-                alt={field}
-                fill
-                className="object-cover"
-              />
+        <div className="w-full flex items-center gap-2">
+          {url ? (
+            <div className="relative w-28 h-28 border rounded-md overflow-hidden shrink-0">
+              {url.endsWith(".pdf") ? (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center h-full text-blue-600 text-sm underline"
+                >
+                  View PDF
+                </a>
+              ) : (
+                <Image
+                  src={url}
+                  alt={field}
+                  fill
+                  className="object-cover"
+                />
+              )}
+            </div>
+          ) : (
+            <div className="w-28 h-28 border border-dashed rounded-md flex items-center justify-center text-gray-400 text-xs">
+              No file
+            </div>
+          )}
+          <div className="flex-1">
+            <Input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={(e) =>
+                handleFileChange(field, e.target.files?.[0] || null)
+              }
+            />
+            {isModified && (
+              <p className="text-sm text-green-600 mt-1">Changed</p>
             )}
           </div>
-        ) : (
-          <p className="text-sm text-gray-500">No document</p>
-        )}
-        <Input
-          type="file"
-          accept="image/*,application/pdf"
-          onChange={(e) => handleFileChange(field, e.target.files?.[0] || null)}
-        />
-        {isModified && <p className="text-sm text-green-600">Changed</p>}
+        </div>
       </div>
     );
   };
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <div className="w-5 h-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+          <span className="text-sm">Loading document details...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <Card className="max-w-2xl mx-auto mt-8">
+    <Card className="max-w-3xl mx-auto mt-8 p-4 sm:p-6">
       <CardHeader>
         <CardTitle>Manage Documents</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-6 sm:grid-cols-2">
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {renderField("ID Proof", "idProof")}
         {renderField("Address Proof", "addressProof")}
         {renderField("Passport Photo", "passportPhoto")}
@@ -163,7 +183,11 @@ export default function DocumentForm() {
       </CardContent>
       <CardFooter className="justify-end">
         <Button onClick={handleSave} disabled={loading || modifiedFields.size === 0}>
-          {loading ? "Saving..." : modifiedFields.size === 0 ? "No Changes" : "Save Changes"}
+          {loading
+            ? "Saving..."
+            : modifiedFields.size === 0
+            ? "No Changes"
+            : "Save Changes"}
         </Button>
       </CardFooter>
     </Card>
