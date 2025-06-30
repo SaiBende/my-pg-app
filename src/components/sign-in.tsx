@@ -1,13 +1,14 @@
 "use client"
 
-import { z } from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
-//check cn error may come
 import { signIn } from "@/lib/auth-client"
 
 import {
@@ -20,19 +21,22 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 
 const SignInSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
-  password: z.string().min(6, { message: "Password must be at least 8 characters." }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
   rememberMe: z.boolean().optional(),
 })
 
+type SignInFormData = z.infer<typeof SignInSchema>
+
 export default function SignInForm() {
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
-  const form = useForm<z.infer<typeof SignInSchema>>({
+  const form = useForm<SignInFormData>({
     resolver: zodResolver(SignInSchema),
     defaultValues: {
       email: "",
@@ -41,18 +45,57 @@ export default function SignInForm() {
     },
   })
 
-  const onSubmit = async (values: z.infer<typeof SignInSchema>) => {
-    await signIn.email(
-      {
-        email: values.email,
-        password: values.password,
-        callbackURL: "/dashboard",
-      },
-      {
-        onRequest: () => setLoading(true),
-        onResponse: () => setLoading(false),
-      }
-    )
+  const onSubmit = async (values: SignInFormData) => {
+    setLoading(true)
+    try {
+      await signIn.email(
+        {
+          email: values.email,
+          password: values.password,
+          callbackURL: "/dashboard",
+        },
+        {
+          onRequest: () => setLoading(true),
+          onResponse: () => setLoading(false),
+          onSuccess: () => {
+            toast.success("✅ Logged in successfully! Redirecting...")
+            router.push("/dashboard")
+          },
+          onError: (ctx) => {
+            toast.error(`❌ Login failed: ${ctx.error.message}`)
+          },
+        }
+      )
+    } catch (err: unknown) {
+      toast.error(`❌ Error: ${(err as Error)?.message || "Something went wrong"}`)
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true)
+    try {
+      await signIn.social(
+        {
+          provider: "google",
+          callbackURL: "/dashboard",
+        },
+        {
+          onRequest: () => setLoading(true),
+          onResponse: () => setLoading(false),
+          onSuccess: () => {
+            toast.success("✅ Google login successful!")
+            router.push("/dashboard")
+          },
+          onError: (ctx) => {
+            toast.error(`❌ Google login failed: ${ctx.error.message}`)
+          },
+        }
+      )
+    } catch (err: unknown) {
+      toast.error(`❌ Error: ${(err as Error)?.message || "Something went wrong"}`)
+      setLoading(false)
+    }
   }
 
   return (
@@ -130,18 +173,7 @@ export default function SignInForm() {
               variant="outline"
               className="w-full gap-2"
               disabled={loading}
-              onClick={async () => {
-                await signIn.social(
-                  {
-                    provider: "google",
-                    callbackURL: "/dashboard",
-                  },
-                  {
-                    onRequest: () => setLoading(true),
-                    onResponse: () => setLoading(false),
-                  }
-                )
-              }}
+              onClick={handleGoogleSignIn}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="0.98em" height="1em" viewBox="0 0 256 262">
                 <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"></path>
@@ -154,6 +186,7 @@ export default function SignInForm() {
           </form>
         </Form>
       </CardContent>
+
       <div className="flex justify-center w-full border-t py-4">
         <p className="text-center text-xs text-neutral-500">
           Don’t have an account?{" "}

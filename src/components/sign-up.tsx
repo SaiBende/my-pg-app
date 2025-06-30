@@ -19,7 +19,14 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card"
 
 import { signUp } from "@/lib/auth-client"
 
@@ -28,7 +35,7 @@ const signUpSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  passwordConfirmation: z.string().min(8, "Confirm your 8 password"),
+  passwordConfirmation: z.string().min(8, "Confirm your password"),
   image: z.any().optional(),
 }).refine((data) => data.password === data.passwordConfirmation, {
   message: "Passwords do not match",
@@ -53,7 +60,6 @@ export default function SignUp() {
     },
   })
 
-  
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -65,23 +71,34 @@ export default function SignUp() {
   }
 
   const onSubmit = async (data: SignUpFormData) => {
-    const imageUrl = data.image
+    setLoading(true)
+    try {
+      const imageUrl = data.image
         ? await uploadImageToCloudinary(data.image)
         : ""
 
-    await signUp.email({
-      email: data.email,
-      password: data.password,
-      name: `${data.firstName} ${data.lastName}`,
-      image: imageUrl,
-      callbackURL: "/dashboard",
-      fetchOptions: {
-        onRequest: () => setLoading(true),
-        onResponse: () => setLoading(false),
-        onError: (ctx) => { toast.error(ctx.error.message); },
-        onSuccess: () => router.push("/dashboard"),
-      },
-    })
+      await signUp.email({
+        email: data.email,
+        password: data.password,
+        name: `${data.firstName} ${data.lastName}`,
+        image: imageUrl,
+        callbackURL: "/dashboard",
+        fetchOptions: {
+          onRequest: () => setLoading(true),
+          onResponse: () => setLoading(false),
+          onError: (ctx) => {
+            toast.error(`❌ Signup failed: ${ctx.error.message}`)
+          },
+          onSuccess: () => {
+            toast.success("✅ Account created successfully!")
+            router.push("/dashboard")
+          },
+        },
+      })
+    } catch (err: unknown) {
+      toast.error(`❌ Error: ${(err as Error)?.message || "Something went wrong"}`)
+      setLoading(false)
+    }
   }
 
   return (
@@ -92,6 +109,7 @@ export default function SignUp() {
           Enter your information to create an account
         </CardDescription>
       </CardHeader>
+
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
@@ -146,7 +164,12 @@ export default function SignUp() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="Password" type="password" autoComplete="new-password" {...field} />
+                    <Input
+                      placeholder="Password"
+                      type="password"
+                      autoComplete="new-password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -160,7 +183,12 @@ export default function SignUp() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="Confirm Password" type="password" autoComplete="new-password" {...field} />
+                    <Input
+                      placeholder="Confirm Password"
+                      type="password"
+                      autoComplete="new-password"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -208,11 +236,16 @@ export default function SignUp() {
             />
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <Loader2 size={16} className="animate-spin" /> : "Create an account"}
+              {loading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                "Create an account"
+              )}
             </Button>
           </form>
         </Form>
       </CardContent>
+
       <CardFooter>
         <div className="flex justify-center w-full border-t py-4">
           <p className="text-center text-xs text-neutral-500">
@@ -235,17 +268,22 @@ async function uploadImageToCloudinary(file: File): Promise<string> {
   const formData = new FormData()
   formData.append("file", file)
 
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  })
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    })
 
-  if (!res.ok) {
-    const errorText = await res.text();;
-    toast.error(`Upload failed: ${errorText}`);
-    throw new Error(`Upload failed: ${errorText}`)
+    if (!res.ok) {
+      const errorText = await res.text()
+      toast.error(`❌ Upload failed: ${errorText}`)
+      throw new Error(`Upload failed: ${errorText}`)
+    }
+
+    const data = await res.json()
+    return data.data?.url
+  } catch (err: unknown) {
+    toast.error(`❌ Upload error: ${(err as Error)?.message || "Unknown error"}`)
+    throw err
   }
-
-  const data = await res.json()
-  return data.data?.url // assumes your /api/upload returns { data: { url } }
 }
