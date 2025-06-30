@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/connectDB';
 import { auth } from '@/lib/auth';
 import { UserVerification } from '@/models/VerificationModel';
 import crypto from 'crypto';
+import { sendEmail } from '@/lib/mail-service';
 
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession(request);
@@ -46,6 +47,20 @@ export async function POST(request: NextRequest) {
 
   // TODO: Send OTP via email or SMS here
   console.log(`Send ${type} OTP: ${otp}`);
+  if (type === 'email') {
+    // Send email with OTP
+    sendEmail({
+      to: session.user.email,
+      subject: 'Your OTP Code',
+      text: `Your OTP code is ${otp}. It is valid for 10 minutes.`,
+      html: `<p>Your OTP code is <strong>${otp}</strong>. It is valid for 10 minutes.</p>`,
+    }).catch(error => {
+      console.error('Failed to send email:', error);
+      return NextResponse.json({ message: 'Failed to send OTP email', success: false }, { status: 500 });
+    })
+  } else if (type === 'mobile') {
+    console.log(`Send mobile OTP: ${otp}`);
+  }
 
   return NextResponse.json({
     message: `OTP sent to your ${type}`,
